@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -674,6 +675,8 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 =======
+=======
+>>>>>>> 5fab2e1f2681a0708ebe569a63a57ca0b87cca22
 MIT License
 
 Copyright (c) 2025 Subhadip Samanta
@@ -695,4 +698,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+<<<<<<< HEAD
 >>>>>>> 51a2d1544904025577830c683398c02c8fcbfb2f
+=======
+>>>>>>> 5fab2e1f2681a0708ebe569a63a57ca0b87cca22

@@ -144,4 +144,8 @@ Developed by whiffCODE.
 
 ---
 
+<<<<<<< HEAD
 © 2025 AlphaBOT - Your Intelligent AI  Assistant.
+=======
+© 2025 AlphaBOT - Your Intelligent AI  Assistant.
+>>>>>>> 5fab2e1f2681a0708ebe569a63a57ca0b87cca22

@@ -1,103 +1,171 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import PromptBox from "@/components/PromptBox";
+import ResponseBox from "@/components/ResponseBox";
+import ControlBar from "@/components/ControlBar";
+import useTypingEffect from "@/hooks/useTypingEffect";
+import { speakText, getSpeechRecognition } from "@/lib/speech";
+import { askAI } from "@/lib/askAI";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const welcomeSpokenRef = useRef(false);
+
+  const typedResponse = useTypingEffect(response, 25);
+
+  useEffect(() => {
+    const welcomeMessage = "Welcome to AlphaBOT. Your next AI Assistant";
+
+    if (!welcomeSpokenRef.current) {
+      speakText(welcomeMessage);
+      setResponse(welcomeMessage);
+      welcomeSpokenRef.current = true;
+    }
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!input.trim()) return;
+
+    setLoading(true);
+    try {
+      const result = await askAI(input);
+      setResponse(result);
+      speakText(result);
+    } catch {
+      setResponse("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+      setInput("");
+    }
+  };
+
+  const handleMicClick = () => {
+    const recognition = getSpeechRecognition();
+
+    if (!recognition) {
+      alert("Speech Recognition is not supported in this browser.");
+      return;
+    }
+
+    if (!recognitionRef.current) {
+      recognitionRef.current = recognition;
+
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => setIsListening(false);
+      recognitionRef.current.onerror = () => setIsListening(false);
+    }
+
+    if (!isListening) {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } else {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  const handleUpload = () => {
+    const inputEl = document.createElement("input");
+    inputEl.type = "file";
+    inputEl.accept = `
+      .pdf,.doc,.docx,.txt,.md,.rtf,.csv,.xlsx,.json,.xml,.tsv,
+      .js,.ts,.py,.java,.cpp,.c,.cs,.html,.css,.php,.rb,.sh,
+      .png,.jpg,.jpeg,.webp,.bmp,.gif,.zip
+    `.replace(/\s+/g, "");
+
+    inputEl.onchange = () => {
+      const file = inputEl.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = (e.target?.result as string)?.trim();
+        if (!text) return;
+
+        setInput(text);
+        setLoading(true);
+
+        try {
+          const result = await askAI(text);
+          setResponse(result);
+          speakText(result);
+        } catch {
+          setResponse("Error reading or processing file.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      reader.readAsText(file);
+    };
+
+    inputEl.click();
+  };
+
+  const handleSpeak = () => {
+    speakText(response);
+  };
+
+  const handleCopy = () => {
+    if (response) navigator.clipboard.writeText(response);
+  };
+
+  const handleClear = () => {
+    setInput("");
+    setResponse("");
+  };
+
+  const handleReset = () => {
+    setInput("");
+    setResponse("");
+    window.location.reload();
+  };
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle("dark");
+  };
+
+  const handleInfo = () => {
+    alert("👨‍💻 Developer: whiffCODE \n🚀 AlphaBOT v1.0.0");
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-indigo-100 to-white dark:from-gray-900 dark:to-black text-gray-800 dark:text-white p-6">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-center">🤖 AʅρԋαBOT</h1>
+
+        <ControlBar
+          isListening={isListening}
+          onMicClick={handleMicClick}
+          onUpload={handleUpload}
+          onSpeak={handleSpeak}
+          onCopy={handleCopy}
+          onClear={handleClear}
+          onReset={handleReset}
+          onToggleTheme={toggleTheme}
+          onInfo={handleInfo}
+        />
+
+        <PromptBox
+          input={input}
+          onChange={setInput}
+          onSubmit={handleSubmit}
+          disabled={loading}
+        />
+
+        <ResponseBox response={typedResponse} loading={loading} />
+      </div>
+    </main>
   );
 }

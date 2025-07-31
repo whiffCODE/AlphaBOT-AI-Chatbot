@@ -4,7 +4,7 @@ export const speakText = (text: string, onEnd?: () => void) => {
   if (!isBrowser || !text) return;
 
   const synth: SpeechSynthesis = window.speechSynthesis;
-  synth.cancel(); // Cancel any ongoing speech
+  synth.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -22,20 +22,20 @@ export const speakText = (text: string, onEnd?: () => void) => {
 export const getSpeechRecognition = (): SpeechRecognition | null => {
   if (!isBrowser) return null;
 
-  const SpeechRecognition =
-    (window as unknown as { SpeechRecognition: typeof SpeechRecognition }).SpeechRecognition ||
-    (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition;
+  const SpeechRecognitionConstructor =
+  (window as Window).SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
+
+  if (!SpeechRecognitionConstructor) {
     console.warn("SpeechRecognition is not supported in this browser.");
     return null;
   }
 
-  const recognition: SpeechRecognition = new SpeechRecognition();
+  const recognition = new SpeechRecognitionConstructor();
   recognition.continuous = false;
   recognition.lang = "en-US";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  return recognition;
+  return recognition as SpeechRecognition;
 };

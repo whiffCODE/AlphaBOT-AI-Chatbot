@@ -2,6 +2,8 @@ import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
+  GenerativeModel,
+  ChatSession,
 } from "@google/generative-ai";
 
 const apiKey = process.env.NEXT_PUBLIC_AI_API_KEY;
@@ -12,24 +14,24 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-const model = genAI.getGenerativeModel({
+const model: GenerativeModel = genAI.getGenerativeModel({
   model: "gemini-2.0-flash",
   safetySettings: [
     {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_LOW,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
     },
     {
       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-      threshold: HarmBlockThreshold.BLOCK_LOW,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
     },
     {
       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-      threshold: HarmBlockThreshold.BLOCK_LOW,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
     },
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_LOW,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
     },
   ],
   generationConfig: {
@@ -40,9 +42,9 @@ const model = genAI.getGenerativeModel({
   },
 });
 
-let chatSession: any = null;
+let chatSession: ChatSession | null = null;
 
-async function initChatSession() {
+async function initChatSession(): Promise<ChatSession> {
   if (!chatSession) {
     chatSession = await model.startChat({ history: [] });
   }
@@ -54,7 +56,7 @@ export async function askAI(prompt: string): Promise<string> {
     const chat = await initChatSession();
     const result = await chat.sendMessage(prompt);
     return await result.response.text();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("AI Error:", error);
     return "Sorry, I couldn’t process that. Try again!";
   }
